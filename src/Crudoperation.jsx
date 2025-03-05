@@ -120,7 +120,17 @@ const Crudoperation = () => {
             />
           </div>
           <div className="col-lg-6">
-            <input
+
+             <InputFields
+             type="password"
+             className="form-control"
+             placeholder="Enter Password"
+             value={formdata.password}
+             onChange={(e)=>setformdata((prev)=>({
+              ...prev, password:e.target.value
+             }))}
+             /> 
+            {/* <input
               type="password"
               className="form-control"
               placeholder="Enter Password"
@@ -129,7 +139,7 @@ const Crudoperation = () => {
                 setformdata((prev) => ({ ...prev, password: e.target.value }))
               }
               required
-            />
+            /> */}
           </div>
           <div className="col-lg-6">
             <input
