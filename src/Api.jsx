@@ -1,9 +1,11 @@
 import axios from "axios";
 
 const Api_Url = "https://fakestoreapi.com/users";
-
-export const fetchAllUsers = async () => {
-  const response = await axios.get(Api_Url);
+export const fetchAllUsers = async ({ queryKey }) => {
+  const [_key, page, limit] = queryKey;
+  const response = await axios.get(`https://fakestoreapi.com/users`, {
+    params: { _page: page, _limit: limit },
+  });
   return response.data;
 };
 
