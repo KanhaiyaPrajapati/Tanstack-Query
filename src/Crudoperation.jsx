@@ -95,7 +95,7 @@ const Crudoperation = () => {
 
   return (
     <div className="container mt-4">
-      <h2>TanStack Query with Pagination</h2>
+      <h2>TanStack Query</h2>
 
       {/* Form */}
       <form
