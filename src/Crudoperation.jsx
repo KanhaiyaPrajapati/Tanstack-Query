@@ -1,15 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
-import { MdEdit } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
-import styled from "styled-components";
+import { MdEdit, MdDelete } from "react-icons/md";
 import { AddUser, deleteUser, fetchAllUsers, UpdateUser } from "./Api";
+import styled from "styled-components";
 import InputFields from "./common/inputFields";
 
 const Crudoperation = () => {
   const queryClient = useQueryClient();
-
   const [editId, setEditId] = useState(null);
+  const [page, setPage] = useState(1);
+  const limit = 5;
+
   const [formdata, setformdata] = useState({
     username: "",
     password: "",
@@ -18,45 +19,30 @@ const Crudoperation = () => {
     city: "",
     zipcode: "",
   });
-  //data fetching that tine use useQurey Hooks
+
   const {
-    data: users,
+    data: users = [],
     isLoading,
     error,
   } = useQuery({
+    queryKey: ["users", page, limit],
     queryFn: fetchAllUsers,
-    queryKey: ["users"],
+    keepPreviousData: true,
   });
 
-  //add Mutation Hooks that time performe Crud Operation like create,edit,delete etc.
-  
   const addUserMutation = useMutation({
     mutationFn: AddUser,
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
-      setformdata({
-        username: "",
-        password: "",
-        email: "",
-        phone: "",
-        city: "",
-        zipcode: "",
-      });
+      queryClient.invalidateQueries(["users", page, limit]);
+      resetForm();
     },
   });
 
   const updateUserMutation = useMutation({
     mutationFn: UpdateUser,
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
-      setformdata({
-        username: "",
-        password: "",
-        email: "",
-        phone: "",
-        city: "",
-        zipcode: "",
-      });
+      queryClient.invalidateQueries(["users", page, limit]);
+      resetForm();
       setEditId(null);
     },
   });
@@ -64,17 +50,25 @@ const Crudoperation = () => {
   const deleteUserMutation = useMutation({
     mutationFn: deleteUser,
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries(["users", page, limit]);
     },
   });
+
+  const resetForm = () => {
+    setformdata({
+      username: "",
+      password: "",
+      email: "",
+      phone: "",
+      city: "",
+      zipcode: "",
+    });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editId) {
-      updateUserMutation.mutate({
-        id: editId,
-        ...formdata,
-      });
+      updateUserMutation.mutate({ id: editId, ...formdata });
     } else {
       addUserMutation.mutate(formdata);
     }
@@ -101,7 +95,9 @@ const Crudoperation = () => {
 
   return (
     <div className="container mt-4">
-      <h2>TanStack Query</h2>
+      <h2>TanStack Query with Pagination</h2>
+
+      {/* Form */}
       <form
         onSubmit={handleSubmit}
         className="shadow-lg w-50 mx-auto px-4 py-4 rounded"
@@ -111,25 +107,24 @@ const Crudoperation = () => {
             <InputFields
               type="text"
               placeholder="Enter the Username"
-              value={formdata.username}
               className="form-control"
+              value={formdata.username}
               onChange={(e) =>
-                setformdata((prev) => ({ ...prev, username: e.target.value }))
+                setformdata({ ...formdata, username: e.target.value })
               }
-              required={true}
+              required
             />
           </div>
           <div className="col-lg-6">
-
-             <InputFields
-             type="password"
-             className="form-control"
-             placeholder="Enter Password"
-             value={formdata.password}
-             onChange={(e)=>setformdata((prev)=>({
-              ...prev, password:e.target.value
-             }))}
-             /> 
+            <InputFields
+              type="password"
+              className="form-control"
+              placeholder="Enter Password"
+              value={formdata.password}
+              onChange={(e) =>
+                setformdata({ ...formdata, password: e.target.value })
+              }
+            />
           </div>
           <div className="col-lg-6">
             <input
@@ -138,7 +133,7 @@ const Crudoperation = () => {
               className="form-control"
               value={formdata.email}
               onChange={(e) =>
-                setformdata((prev) => ({ ...prev, email: e.target.value }))
+                setformdata({ ...formdata, email: e.target.value })
               }
               required
             />
@@ -150,7 +145,7 @@ const Crudoperation = () => {
               placeholder="Enter Mobile Number"
               value={formdata.phone}
               onChange={(e) =>
-                setformdata((prev) => ({ ...prev, phone: e.target.value }))
+                setformdata({ ...formdata, phone: e.target.value })
               }
               required
             />
@@ -162,7 +157,7 @@ const Crudoperation = () => {
               placeholder="Enter City"
               value={formdata.city}
               onChange={(e) =>
-                setformdata((prev) => ({ ...prev, city: e.target.value }))
+                setformdata({ ...formdata, city: e.target.value })
               }
               required
             />
@@ -174,7 +169,7 @@ const Crudoperation = () => {
               placeholder="Enter Zipcode"
               value={formdata.zipcode}
               onChange={(e) =>
-                setformdata((prev) => ({ ...prev, zipcode: e.target.value }))
+                setformdata({ ...formdata, zipcode: e.target.value })
               }
               required
             />
@@ -201,49 +196,64 @@ const Crudoperation = () => {
           </tr>
         </thead>
         <tbody>
-          {users?.map((user) => {
-            return (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.username}</td>
-                <td>{user.password}</td>
-                <td>{user.email}</td>
-                <td>{user.phone}</td>
-                <td>{user?.address?.city}</td>
-                <td>{user?.address?.zipcode}</td>
-                <td>
-                  <button
-                    className="btn btn-warning btn-sm mx-2"
-                    onClick={() => {
-                      setformdata({
-                        username: user.username,
-                        password: user.password,
-                        email: user.email,
-                        phone: user.phone,
-                        city: user?.address?.city || "",
-                        zipcode: user?.address?.zipcode || "",
-                      });
-                    }}
-                  >
-                    <MdEdit />
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => deleteUserMutation.mutate(user.id)}
-                  >
-                    <MdDelete />
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
+          {users.map((user) => (
+            <tr key={user.id}>
+              <td>{user.id}</td>
+              <td>{user.username}</td>
+              <td>{user.password}</td>
+              <td>{user.email}</td>
+              <td>{user.phone}</td>
+              <td>{user?.address?.city || "N/A"}</td>
+              <td>{user?.address?.zipcode || "N/A"}</td>
+              <td>
+                <button
+                  className="btn btn-warning btn-sm mx-2"
+                  onClick={() =>
+                    setformdata({
+                      username: user.username,
+                      password: user.password,
+                      email: user.email,
+                      phone: user.phone,
+                      city: user?.address?.city || "",
+                      zipcode: user?.address?.zipcode || "",
+                    })
+                  }
+                >
+                  <MdEdit />
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => deleteUserMutation.mutate(user.id)}
+                >
+                  <MdDelete />
+                </button>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
+      <div className="d-flex justify-content-between mt-3">
+        <button
+          className="btn btn-outline-primary"
+          disabled={page === 1}
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+        >
+          Previous
+        </button>
+        <span className="fw-bold">Page {page}</span>
+        <button
+          className="btn btn-outline-primary"
+          onClick={() => setPage((prev) => prev + 1)}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
 
 export default Crudoperation;
+
 const StyledWrapper = styled.div`
   display: flex;
   justify-content: center;
