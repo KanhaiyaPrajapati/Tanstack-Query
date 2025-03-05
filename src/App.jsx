@@ -9,6 +9,7 @@ function App() {
       queries: {
         staleTime: 10000,
         cacheTime: 30000,
+        refetchOnWindowFocus: true, 
       },
     },
   });
